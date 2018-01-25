@@ -1,11 +1,25 @@
+'use strict'
+
 const express = require('express');
 const graphqlHTTP = require('express-graphql');
 const graphql = require ('graphql');
 const Dataloader = require('dataloader');
 
-// Repositories
-const customerRepo = {
-    findAll: async () => {
+// Parsing arguments
+const args = require('yargs').argv;
+console.log("Arguments:")
+console.log(args);
+const orderUrl = args.orderUrl;
+const customerUrl = args.orderUrl;
+
+// Customer repositories
+class LocalCustomerRepo {
+
+    constructor() {
+        console.log("Local customer repository initialized..")
+    }
+
+    async findAll() {
         console.log("customers.findAll")
         return [
             { customerId:1, name:'Alex'},
@@ -13,21 +27,49 @@ const customerRepo = {
         ];
     }
 }
-
-const generateOrders = customerId => [
-    { orderId: (customerId * 100) + 1, customerId: customerId },
-    { orderId: (customerId * 100) + 2, customerId: customerId }
-];
-const orderRepo = {
-    findByCustomerId: async (customerId) => {
-        console.log("orders.findByCustomerId: customerId " + customerId)
-        return generateOrders(customerId)
-    },
-    findByCustomerIds: async (customerIds) => {
-        console.log("orders.findByCustomerIds: customerIds " + customerIds)
-        return customerIds.map(generateOrders)
+class RemoteCustomerRepo {
+    constructor(url) {
+        console.log("Remote customer repository initialized.. Url: " + url);
+        throw "Not implemented";
     }
 }
+const customerRepo = customerUrl 
+    ? new RemoteCustomerRepo(customerUrl) 
+    : new LocalCustomerRepo();
+
+// Order repositories
+class LocalOrderRepo {
+    constructor(url) {
+        console.log("Local order repository initialized..")
+
+        const generateOrders = customerId => {
+            return [
+                { orderId: (customerId * 100) + 1, customerId: customerId },
+                { orderId: (customerId * 100) + 2, customerId: customerId }
+            ];
+        }
+
+        this.findByCustomerId = async customerId => {
+            console.log("orders.findByCustomerId: customerId " + customerId);
+            return this.generateOrders(customerId);
+        }
+
+        this.findByCustomerIds = async customerIds => {
+            console.log("orders.findByCustomerIds: customerIds " + customerIds);
+            return customerIds.map(generateOrders);
+        }
+    }
+}
+class RemoteOrderRepo {
+    constructor(url) {
+        console.log("Remote order repository initialized.. Url: " + url);
+        throw "Not implemented";
+    }
+}
+const orderRepo = orderUrl 
+    ? new RemoteOrderRepo(orderUrl)
+    : new LocalOrderRepo();
+
 
 // Helper functions
 const ordersLoader = new Dataloader(orderRepo.findByCustomerIds, { cache: false })
