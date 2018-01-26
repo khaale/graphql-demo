@@ -4,13 +4,14 @@ const express = require('express');
 const graphqlHTTP = require('express-graphql');
 const graphql = require ('graphql');
 const Dataloader = require('dataloader');
+const axios = require('axios');
 
 // Parsing arguments
 const args = require('yargs').argv;
 console.log("Arguments:")
 console.log(args);
 const orderUrl = args.orderUrl;
-const customerUrl = args.orderUrl;
+const customerUrl = args.customerUrl;
 
 // Customer repositories
 class LocalCustomerRepo {
@@ -30,7 +31,15 @@ class LocalCustomerRepo {
 class RemoteCustomerRepo {
     constructor(url) {
         console.log("Remote customer repository initialized.. Url: " + url);
-        throw "Not implemented";
+
+        this.findAll = async () => {
+            console.log("customers.findAll..")
+            const response = await axios.get(url + '/api/customer');
+            const data = response.data;
+            console.log("customers.findAll. Received: ");
+            console.log(data);
+            return data;
+        };
     }
 }
 const customerRepo = customerUrl 
