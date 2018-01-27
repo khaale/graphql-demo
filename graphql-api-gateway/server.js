@@ -34,7 +34,7 @@ class RemoteCustomerRepo {
 
         this.findAll = async () => {
             console.log("customers.findAll..")
-            const response = await axios.get(url + '/api/customer');
+            const response = await axios.get(url + '/api/customers');
             const data = response.data;
             console.log("customers.findAll. Received: ");
             console.log(data);
@@ -58,11 +58,6 @@ class LocalOrderRepo {
             ];
         }
 
-        this.findByCustomerId = async customerId => {
-            console.log("orders.findByCustomerId: customerId " + customerId);
-            return this.generateOrders(customerId);
-        }
-
         this.findByCustomerIds = async customerIds => {
             console.log("orders.findByCustomerIds: customerIds " + customerIds);
             return customerIds.map(generateOrders);
@@ -72,7 +67,15 @@ class LocalOrderRepo {
 class RemoteOrderRepo {
     constructor(url) {
         console.log("Remote order repository initialized.. Url: " + url);
-        throw "Not implemented";
+
+        this.findByCustomerIds = async customerIds => {
+            console.log("orders.findByCustomerIds..")
+            const response = await axios.get(url + '/api/orders', { params: { customerId: customerIds }});
+            const data = response.data;
+            console.log("orders.findByCustomerIds. Received: ");
+            console.log(data);
+            return data;
+        }
     }
 }
 const orderRepo = orderUrl 
@@ -96,9 +99,7 @@ const CustomerType = new graphql.GraphQLObjectType({
         },
         orders: {
             type: new graphql.GraphQLList(OrderType),
-            // Causes N+1 problem
-            //resolve: async customer => orderRepo.getByCustomerId(customer.customerId)
-            // Avoids N+1 problem with dataloader
+            // Avoiding N+1 problem with dataloader
             resolve: async customer => ordersLoader.load(customer.customerId)
         }
       }
