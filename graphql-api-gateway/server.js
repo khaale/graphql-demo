@@ -5,6 +5,9 @@ const graphqlHTTP = require('express-graphql');
 const graphql = require ('graphql');
 const Dataloader = require('dataloader');
 const axios = require('axios');
+const graphqlIsoDate = require('graphql-iso-date')
+
+
 
 // Parsing arguments
 const args = require('yargs').argv;
@@ -53,7 +56,7 @@ class LocalOrderRepo {
 
         const generateOrders = customerId => {
             return [
-                { orderId: (customerId * 100) + 1, customerId: customerId },
+                { orderId: (customerId * 100) + 1, customerId: customerId, orderDate: new Date() },
                 { orderId: (customerId * 100) + 2, customerId: customerId }
             ];
         }
@@ -115,6 +118,9 @@ const OrderType = new graphql.GraphQLObjectType({
             },
             customerId: {
                 type: graphql.GraphQLInt
+            },
+            orderDate: {
+                type: graphqlIsoDate.GraphQLDateTime
             }
         }
     }
